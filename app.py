@@ -1,43 +1,42 @@
-
-================================================================================
-                       ENTERPRISE-GRADE AI STT AGENT
-================================================================================
-
-ARCHITECTURAL BLUEPRINT & SYSTEM OVERVIEW
-----------------------------------------
-This enterprise application utilizes a layered, decoupled architecture optimized 
-for running within Streamlit's reactive layout paradigm. It functions as an 
-Autonomous Cognitive Audio Agent rather than a primitive transcription wrapper.
-
-1. DATA INGESTION & CAPTURE LAYER:
-   - Ingests audio natively via multi-format binaries (WAV, MP3, M4A, FLAC, OGG, AAC) 
-     or processes standard web-microphone buffer payloads.
-   - Computes low-level mathematical metrics (metadata telemetry) programmatically 
-     without relying on deep third-party C-bindings (like FFmpeg/Libav), ensuring 
-     100% compilation safety on Streamlit Community Cloud runtimes.
-
-2. SPEECH COGNITION ENGINE LAYER:
-   - For universal platform cross-compatibility and strict API execution safety without 
-     crashing host Docker memories with heavy local neural weights, the engine uses 
-     the standard OpenAI Whisper SaaS gateway. 
-   - Supports seamless timestamp chunking, extreme noise tolerance, auto-punctuation, 
-     and high accuracy cross-lingual mapping.
-
-3. NLP ANALYSIS & COGNITIVE LOGIC LAYER:
-   - Implements structured Pydantic structural boundaries mapped to deep LLM analysis.
-   - Extracts structured entities, multi-tier executive abstracts, semantic sentiment 
-     vectors, and actionable enterprise task tables tailored precisely across 9 operational modes.
-
-4. STATEFUL SESSION MEMORY LAYER:
-   - Bypasses Streamlit's default "stateless rerun" model by utilizing an organized 
-     In-Memory Registry Matrix bound directly to the user state machine session keys. 
-     Allows real-time tabular searching, cross-filtering, and retroactive report compilation.
-
-5. SAAS ANALYTICS & EXPORT INDUSTRIAL ENGINE:
-   - Performs mathematical and programmatic analysis across text variables (reading pace metrics, 
-     density metrics, tonal balances) and structures interactive JSON, text, and flat CSV 
-     download buffers instantly.
-"""
+# ================================================================================
+#                        ENTERPRISE-GRADE AI STT AGENT
+# ================================================================================
+#
+# ARCHITECTURAL BLUEPRINT & SYSTEM OVERVIEW
+# ----------------------------------------
+# This enterprise application utilizes a layered, decoupled architecture optimized 
+# for running within Streamlit's reactive layout paradigm. It functions as an 
+# Autonomous Cognitive Audio Agent rather than a primitive transcription wrapper.
+#
+# 1. DATA INGESTION & CAPTURE LAYER:
+#    - Ingests audio natively via multi-format binaries (WAV, MP3, M4A, FLAC, OGG, AAC) 
+#      or processes standard web-microphone buffer payloads.
+#    - Computes low-level mathematical metrics (metadata telemetry) programmatically 
+#      without relying on deep third-party C-bindings (like FFmpeg/Libav), ensuring 
+#      100% compilation safety on Streamlit Community Cloud runtimes.
+#
+# 2. SPEECH COGNITION ENGINE LAYER:
+#    - For universal platform cross-compatibility and strict API execution safety without 
+#      crashing host Docker memories with heavy local neural weights, the engine uses 
+#      the standard OpenAI Whisper SaaS gateway. 
+#    - Supports seamless timestamp chunking, extreme noise tolerance, auto-punctuation, 
+#      and high accuracy cross-lingual mapping.
+#
+# 3. NLP ANALYSIS & COGNITIVE LOGIC LAYER:
+#    - Implements structured Pydantic structural boundaries mapped to deep LLM analysis.
+#    - Extracts structured entities, multi-tier executive abstracts, semantic sentiment 
+#      vectors, and actionable enterprise task tables tailored precisely across 9 operational modes.
+#
+# 4. STATEFUL SESSION MEMORY LAYER:
+#    - Bypasses Streamlit's default "stateless rerun" model by utilizing an organized 
+#      In-Memory Registry Matrix bound directly to the user state machine session keys. 
+#      Allows real-time tabular searching, cross-filtering, and retroactive report compilation.
+#
+# 5. SAAS ANALYTICS & EXPORT INDUSTRIAL ENGINE:
+#    - Performs mathematical and programmatic analysis across text variables (reading pace metrics, 
+#      density metrics, tonal balances) and structures interactive JSON, text, and flat CSV 
+#      download buffers instantly.
+# ================================================================================
 
 import os
 import json
@@ -263,7 +262,6 @@ def compute_text_telemetry(text: str, duration_sec: float) -> Dict[str, Any]:
 # PROFESSIONAL USER INTERFACE (STREAMLIT SAAS DESIGN)
 # ------------------------------------------------------------------------------
 def main():
-    刻 = datetime.datetime.now()
     init_session_memory_fabric()
     
     # Custom CSS Injector for modern structural design alignment
@@ -281,7 +279,7 @@ def main():
     with st.sidebar:
         st.image("https://img.icons8.com/nolan/96/artificial-intelligence.png", width=60)
         st.title("SaaS AI Agent Console")
-        st.caption("v1.4.0 • Dual-File Production Core")
+        st.caption("v1.4.1 • Dual-File Production Core")
         st.divider()
 
         # Security Authentication Pipeline
@@ -378,7 +376,7 @@ def main():
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 
-                # FIX EFFECTED HERE: Dict literal closing properly resolved
+                # Render Plotly Sentiment Metric Balance Meter
                 sent_score = rec["analysis"]["sentiment"]["score"]
                 fig = go.Figure(go.Indicator(
                     mode = "gauge+number",
@@ -560,5 +558,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-```
