@@ -1,5 +1,5 @@
 # ================================================================================
-#                        ENTERPRISE-GRADE AI STT AGENT
+#                        ENTERPRISE-GRADE AI STT AGENT (GROQ EDITION)
 # ================================================================================
 #
 # ARCHITECTURAL BLUEPRINT & SYSTEM OVERVIEW
@@ -11,31 +11,23 @@
 # 1. DATA INGESTION & CAPTURE LAYER:
 #    - Ingests audio natively via multi-format binaries (WAV, MP3, M4A, FLAC, OGG, AAC) 
 #      or processes standard web-microphone buffer payloads.
-#    - Computes low-level mathematical metrics (metadata telemetry) programmatically 
-#      without relying on deep third-party C-bindings (like FFmpeg/Libav), ensuring 
-#      100% compilation safety on Streamlit Community Cloud runtimes.
+#    - Computes low-level mathematical metrics (metadata telemetry) programmatically.
 #
 # 2. SPEECH COGNITION ENGINE LAYER:
-#    - For universal platform cross-compatibility and strict API execution safety without 
-#      crashing host Docker memories with heavy local neural weights, the engine uses 
-#      the standard OpenAI Whisper SaaS gateway. 
+#    - Uses the Groq Whisper-Large-V3 endpoint for lightning-fast inference.
 #    - Supports seamless timestamp chunking, extreme noise tolerance, auto-punctuation, 
 #      and high accuracy cross-lingual mapping.
 #
 # 3. NLP ANALYSIS & COGNITIVE LOGIC LAYER:
 #    - Implements structured Pydantic structural boundaries mapped to deep LLM analysis.
-#    - Extracts structured entities, multi-tier executive abstracts, semantic sentiment 
-#      vectors, and actionable enterprise task tables tailored precisely across 9 operational modes.
+#    - Uses Groq's high-speed Llama models natively enforcing JSON-mode extraction.
 #
 # 4. STATEFUL SESSION MEMORY LAYER:
 #    - Bypasses Streamlit's default "stateless rerun" model by utilizing an organized 
 #      In-Memory Registry Matrix bound directly to the user state machine session keys. 
-#      Allows real-time tabular searching, cross-filtering, and retroactive report compilation.
 #
 # 5. SAAS ANALYTICS & EXPORT INDUSTRIAL ENGINE:
-#    - Performs mathematical and programmatic analysis across text variables (reading pace metrics, 
-#      density metrics, tonal balances) and structures interactive JSON, text, and flat CSV 
-#      download buffers instantly.
+#    - Structures interactive JSON, text, and flat CSV download buffers instantly.
 # ================================================================================
 
 import os
@@ -51,7 +43,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from openai import OpenAI
+from groq import Groq
 
 # ------------------------------------------------------------------------------
 # SECURITY & SYSTEM LOGGING ARCHITECTURE
@@ -102,8 +94,8 @@ class EnterprisePoolAudioAgent:
     speech tokenization, and multi-mode contextual translations."""
     
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY", "")
-        self.client = OpenAI(api_key=self.api_key) if self.api_key else None
+        self.api_key = api_key or os.getenv("GROQ_API_KEY", "")
+        self.client = Groq(api_key=self.api_key) if self.api_key else None
 
     def is_authenticated(self) -> bool:
         """Validates if the structural API layer has active authorization tokens."""
@@ -149,20 +141,27 @@ class EnterprisePoolAudioAgent:
         Handles chunk boundaries seamlessly and outputs the string text along with auto-detected languages.
         """
         if not self.is_authenticated():
-            raise ValueError("OpenAI API authentication tokens are missing. Please configure your key in the control console.")
+            raise ValueError("Groq API authentication tokens are missing. Please configure your key in the control console.")
 
         # Reset pointer array
         uploaded_file.seek(0)
         
         logger.info(f"Initiating Speech Recognition transcription tunnel for file: {uploaded_file.name}")
+        
+        # Groq expects a tuple containing (filename, file_bytes) for file uploads
         response = self.client.audio.transcriptions.create(
-            model="whisper-1",
-            file=uploaded_file,
+            model="whisper-large-v3",
+            file=(uploaded_file.name, uploaded_file.getvalue()),
             response_format="verbose_json"
         )
         
-        transcript_text = getattr(response, "text", "")
-        detected_lang = getattr(response, "language", "en")
+        # Handle dict or object responses defensively 
+        if isinstance(response, dict):
+            transcript_text = response.get("text", "")
+            detected_lang = response.get("language", "en")
+        else:
+            transcript_text = getattr(response, "text", "")
+            detected_lang = getattr(response, "language", "en")
         
         return transcript_text, detected_lang
 
@@ -191,24 +190,34 @@ class EnterprisePoolAudioAgent:
 
         system_instruction = (
             "You are a Principal AI Cognitive Agent. Your task is to perform an exhaustive, multi-tier analysis "
-            "on the provided transcript. You must structure your findings precisely into the requested schema.\n"
+            "on the provided transcript. You must structure your findings precisely into a JSON object.\n"
             f"The target analysis mode is: {target_mode}. You must prioritize these metrics in the specialized section: {mode_prompt}\n"
-            f"Note: The source conversation language context is detected as '{language}' code. Execute all analytics cleanly."
+            f"Note: The source conversation language context is detected as '{language}' code. Execute all analytics cleanly.\n\n"
+            "IMPORTANT: You must respond ONLY with valid JSON. The JSON must exactly match the following JSON schema mapping:\n"
+            f"{json.dumps(CognitivePayload.model_json_schema())}"
         )
 
         logger.info(f"Executing Deep NLP Cognitive Analysis under domain matrix mode: {target_mode}")
         
-        completion = self.client.beta.chat.completions.parse(
-            model="gpt-4o-mini",
+        completion = self.client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": f"TRANSCRIPT EXTRACT:\n\"\"\"\n{transcript}\n\"\"\""}
             ],
-            response_format=CognitivePayload,
+            response_format={"type": "json_object"},
             temperature=0.2
         )
 
-        return completion.choices[0].message.parsed
+        raw_json = completion.choices[0].message.content
+        
+        try:
+            parsed_dict = json.loads(raw_json)
+            # Use Pydantic V2 native validation to cast the dictionary securely
+            return CognitivePayload.model_validate(parsed_dict)
+        except Exception as e:
+            logger.error(f"Failed to parse AI output. Error: {str(e)}\nRaw JSON: {raw_json}")
+            raise ValueError(f"Cognitive Pipeline Data Error: The model failed to strictly output the exact schema structure. Details: {str(e)}")
 
 # ------------------------------------------------------------------------------
 # VOLATILE STORAGE SESSION STATE MANAGEMENT LAYER
@@ -242,12 +251,10 @@ def compute_text_telemetry(text: str, duration_sec: float) -> Dict[str, Any]:
     words = text.split()
     word_count = len(words)
     char_count = len(text)
-    # Filter empty items or fragments
     sentences = [s for s in text.replace("?", ".").replace("!", ".").split(".") if s.strip()]
     sentence_count = max(1, len(sentences))
     
     avg_sentence_len = round(word_count / sentence_count, 1)
-    # Estimate reading metrics based on standard global distribution charts (200 words/min)
     estimated_reading_time_min = max(1, math.ceil(word_count / 200))
     
     return {
@@ -279,19 +286,19 @@ def main():
     with st.sidebar:
         st.image("https://img.icons8.com/nolan/96/artificial-intelligence.png", width=60)
         st.title("SaaS AI Agent Console")
-        st.caption("v1.4.1 • Dual-File Production Core")
+        st.caption("v2.0.0 • Groq LPU Production Core")
         st.divider()
 
         # Security Authentication Pipeline
         st.subheader("🔑 Access Authorization")
-        api_input = st.text_input("OpenAI API Key Token", type="password", help="Enter a valid OpenAI corporate token to initialize transcription tunnels.")
+        api_input = st.text_input("Groq API Key Token", type="password", help="Enter a valid Groq token to initialize LPU tunnels.")
         
         # Fallback environment variable evaluation checking
-        resolved_key = api_input if api_input else os.getenv("OPENAI_API_KEY", "")
+        resolved_key = api_input if api_input else os.getenv("GROQ_API_KEY", "")
         agent = EnterprisePoolAudioAgent(api_key=resolved_key)
         
         if agent.is_authenticated():
-            st.success("Secure Pipeline Link: Active")
+            st.success("Groq Pipeline Link: Active")
         else:
             st.warning("Pipeline State: Disconnected")
 
@@ -344,7 +351,7 @@ def main():
                     execute_pipeline = st.button("🚀 Execute Speech-To-Text Cognitive Pipeline", type="primary")
                     
                     if execute_pipeline:
-                        with st.spinner("Processing speech recognition frames..."):
+                        with st.spinner("Processing whisper frames..."):
                             transcript, lang = agent.execute_speech_to_text(uploaded_file)
                             
                         with st.spinner("Executing structured context analysis..."):
@@ -357,7 +364,7 @@ def main():
                 except Exception as e:
                     st.error(f"Ingestion Pipe Interruption: {str(e)}")
             elif uploaded_file:
-                st.info("Please provide your OpenAI API key in the sidebar console to process the uploaded file.")
+                st.info("Please provide your Groq API key in the sidebar console to process the uploaded file.")
 
         with col_telemetry:
             st.subheader("📊 Engine Signal Analytics")
@@ -528,12 +535,12 @@ def main():
                                      ▼
         ┌─────────────────────────────────────────────────────────┐
         │            Speech Recognition Pipeline Layer            │
-        │    (SaaS Tokenized Gateways, Multi-Language Matrix)    │
+        │   (Groq LPU Gateway, Whisper V3 Multi-Language Matrix)  │
         └────────────────────────────┬────────────────────────────┘
                                      ▼
         ┌─────────────────────────────────────────────────────────┐
         │            Cognitive NLP Parsing Layer                  │
-        │  (Strict Type Checking, Pydantic Schema Declarations)   │
+        │   (Groq Llama 3 JSON-Mode extraction & Type Checking)   │
         └────────────────────────────┬────────────────────────────┘
                                      ▼
         ┌─────────────────────────────────────────────────────────┐
@@ -541,19 +548,6 @@ def main():
         │ (Volatile Session Context Frameworks, In-Memory Matrix) │
         └─────────────────────────────────────────────────────────┘
         ```
-        
-        #### Detailed Functional Layers
-        
-        1. **Audio Validation Systems:** The system performs algorithmic binary file boundary sizing checks to stop overflow vector payload execution. It restricts tracking allocations to 25MB before opening down-stream network tunnels, protecting cloud containers from memory exhaustion.
-        
-        2. **Speech-To-Text Architecture Loops:**
-           Uses strict parameter tuning mapped to the OpenAI Whisper endpoint. Language identification, sentence parsing, punctuation addition, and timestamp handling happen natively within the neural transformer architecture weights.
-        
-        3. **Structured NLP Reasoning Engines:**
-           By enforcing strict structural parameters via Pydantic model configurations, we completely block LLM text hallucinations. The model output is forced into valid JSON structures mapping exactly to required executive fields.
-           
-        4. **Volatile Session Storage Matrices:**
-           Because Streamlit naturally erases standard code memory heaps between page refreshes, we route data streams to persistent tracking records pinned inside global state dictionary configurations.
         """)
 
 if __name__ == "__main__":
