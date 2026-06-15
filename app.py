@@ -1,25 +1,4 @@
-Good catch! That was a classic typo inside the Plotly indicator gauge configuration—a square bracket `]` was mistakenly used instead of a curly brace `}` to close the dictionary literal.
 
-Let's fix that syntax bug immediately so your enterprise agent runs perfectly.
-
-### `requirements.txt`
-
-```text
-streamlit>=1.30.0
-openai>=1.0.0
-pydantic>=2.0.0
-numpy>=1.24.0
-pandas>=2.0.0
-plotly>=5.15.0
-
-```
-
----
-
-### `app.py`
-
-```python
-"""
 ================================================================================
                        ENTERPRISE-GRADE AI STT AGENT
 ================================================================================
